@@ -38,6 +38,7 @@ export class SchemaModel {
 
   isPrimitive: boolean;
   isCircular: boolean = false;
+  isRequestType: boolean = false;
 
   format?: string;
   displayFormat?: string;
@@ -82,6 +83,7 @@ export class SchemaModel {
     private options: RedocNormalizedOptions,
     isChild: boolean = false,
     private refsStack: string[] = [],
+    isRequestType: boolean = false,
   ) {
     makeObservable(this);
 
@@ -90,9 +92,10 @@ export class SchemaModel {
     const { resolved, refsStack: newRefsStack } = parser.deref(schemaOrRef, refsStack, true);
     this.refsStack = pushRef(newRefsStack, this.pointer);
     this.rawSchema = resolved;
+    this.isRequestType = isRequestType;
 
     this.schema = parser.mergeAllOf(this.rawSchema, this.pointer, this.refsStack);
-    this.init(parser, isChild);
+    this.init(parser, isChild, isRequestType);
 
     if (options.showExtensions) {
       this.extensions = extractExtensions(this.schema, options.showExtensions);
@@ -112,7 +115,7 @@ export class SchemaModel {
     return this.type === type || (isArray(this.type) && this.type.includes(type));
   }
 
-  init(parser: OpenAPIParser, isChild: boolean) {
+  init(parser: OpenAPIParser, isChild: boolean, isRequestType: boolean) {
     const schema = this.schema;
     this.isCircular = !!schema['x-circular-ref'];
 
@@ -129,7 +132,7 @@ export class SchemaModel {
     this.externalDocs = schema.externalDocs;
 
     this.constraints = humanizeConstraints(schema);
-    this.displayFormat = this.format;
+    this.displayFormat = isRequestType && this.rawSchema['x-file-only'] ? 'binary' : this.format;
     this.isPrimitive = isPrimitiveType(schema, this.type);
     this.default = schema.default;
     this.readOnly = !!schema.readOnly;
@@ -191,10 +194,24 @@ export class SchemaModel {
     }
 
     if (this.hasType('object')) {
-      this.fields = buildFields(parser, schema, this.pointer, this.options, this.refsStack);
+      this.fields = buildFields(
+        parser,
+        schema,
+        this.pointer,
+        this.options,
+        this.refsStack,
+        isRequestType,
+      );
     } else if (this.hasType('array')) {
       if (isArray(schema.items) || isArray(schema.prefixItems)) {
-        this.fields = buildFields(parser, schema, this.pointer, this.options, this.refsStack);
+        this.fields = buildFields(
+          parser,
+          schema,
+          this.pointer,
+          this.options,
+          this.refsStack,
+          isRequestType,
+        );
       } else if (schema.items) {
         this.items = new SchemaModel(
           parser,
@@ -203,6 +220,7 @@ export class SchemaModel {
           this.options,
           false,
           this.refsStack,
+          isRequestType,
         );
       }
 
@@ -261,6 +279,7 @@ export class SchemaModel {
         this.options,
         false,
         refsStack,
+        this.isRequestType,
       );
 
       return schema;
@@ -378,6 +397,7 @@ export class SchemaModel {
         this.options,
         true,
         this.refsStack.slice(0, -1),
+        this.isRequestType,
       );
       innerSchema.title = name;
       return innerSchema;
@@ -413,6 +433,7 @@ export class SchemaModel {
           this.options,
           false,
           this.refsStack,
+          this.isRequestType,
         ),
     );
     this.oneOfType = 'One of';
@@ -425,6 +446,7 @@ function buildFields(
   $ref: string,
   options: RedocNormalizedOptions,
   refsStack: string[],
+  isRequestType: boolean,
 ): FieldModel[] {
   const props = schema.properties || schema.prefixItems || schema.items || {};
   const patternProps = schema.patternProperties || {};
@@ -457,6 +479,7 @@ function buildFields(
       $ref + '/properties/' + fieldName,
       options,
       refsStack,
+      isRequestType,
     );
   });
 
@@ -490,6 +513,7 @@ function buildFields(
         `${$ref}/patternProperties/${fieldName}`,
         options,
         refsStack,
+        isRequestType,
       );
     }),
   );
@@ -510,6 +534,7 @@ function buildFields(
         $ref + '/additionalProperties',
         options,
         refsStack,
+        isRequestType,
       ),
     );
   }
@@ -522,6 +547,7 @@ function buildFields(
       $ref,
       options,
       refsStack,
+      isRequestType,
     }),
   );
 
@@ -535,6 +561,7 @@ function buildAdditionalItems({
   $ref,
   options,
   refsStack,
+  isRequestType,
 }: {
   parser: OpenAPIParser;
   schema?: OpenAPISchema | OpenAPISchema[] | boolean;
@@ -542,6 +569,7 @@ function buildAdditionalItems({
   $ref: string;
   options: RedocNormalizedOptions;
   refsStack: string[];
+  isRequestType: boolean;
 }) {
   if (isBoolean(schema)) {
     return schema
@@ -555,6 +583,7 @@ function buildAdditionalItems({
             `${$ref}/additionalItems`,
             options,
             refsStack,
+            isRequestType,
           ),
         ]
       : [];
@@ -573,6 +602,7 @@ function buildAdditionalItems({
             `${$ref}/additionalItems`,
             options,
             refsStack,
+            isRequestType,
           ),
       ),
     ];
@@ -589,6 +619,7 @@ function buildAdditionalItems({
         `${$ref}/additionalItems`,
         options,
         refsStack,
+        isRequestType,
       ),
     ];
   }

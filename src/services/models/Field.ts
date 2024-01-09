@@ -12,7 +12,7 @@ import { extractExtensions } from '../../utils/openapi';
 import type { OpenAPIParser } from '../OpenAPIParser';
 import { SchemaModel } from './Schema';
 import { ExampleModel } from './Example';
-import { isArray, mapValues } from '../../utils/helpers';
+import { isArray, mapValues, formatBytes } from '../../utils/helpers';
 
 const DEFAULT_SERIALIZATION: Record<
   OpenAPIParameterLocation,
@@ -56,6 +56,7 @@ export class FieldModel {
   explode: boolean;
   style?: OpenAPIParameterStyle;
   const?: any;
+  preDescription?: string[];
 
   serializationMime?: string;
 
@@ -65,6 +66,7 @@ export class FieldModel {
     pointer: string,
     options: RedocNormalizedOptions,
     refsStack?: string[],
+    isRequestType: boolean = false,
   ) {
     makeObservable(this);
 
@@ -81,9 +83,19 @@ export class FieldModel {
       fieldSchema = info.content[serializationMime] && info.content[serializationMime].schema;
     }
 
-    this.schema = new SchemaModel(parser, fieldSchema || {}, pointer, options, false, refsStack);
+    this.schema = new SchemaModel(
+      parser,
+      fieldSchema || {},
+      pointer,
+      options,
+      false,
+      refsStack,
+      isRequestType,
+    );
     this.description =
-      info.description === undefined ? this.schema.description || '' : info.description;
+      info.description === undefined
+        ? (isRequestType && fieldSchema?.['x-param-description']) || this.schema.description || ''
+        : info.description;
     this.example = info.example || this.schema.example;
 
     if (info.examples !== undefined || this.schema.examples !== undefined) {
@@ -110,10 +122,37 @@ export class FieldModel {
       this.explode = !!info.explode;
     }
 
-    this.deprecated = info.deprecated === undefined ? !!this.schema.deprecated : info.deprecated;
+    this.deprecated =
+      info.deprecated === undefined
+        ? !!(this.schema.deprecated || fieldSchema?.['x-deprecated'])
+        : info.deprecated;
 
     if (options.showExtensions) {
       this.extensions = extractExtensions(info, options.showExtensions);
+    }
+
+    if (isRequestType) {
+      this.preDescription = [];
+      if (fieldSchema?.['x-deprecated']) {
+        this.preDescription.push(fieldSchema?.['x-deprecated']);
+      }
+      if (fieldSchema?.['x-file-types']) {
+        this.preDescription.push(
+          'Accepts: ' +
+            fieldSchema?.['x-file-types'].map((t: string) => '`' + t + '`').join(' ') +
+            ' or `null` to remove.',
+        );
+      }
+      if (fieldSchema?.['x-file-max-size']) {
+        this.preDescription.push(
+          'Max size: ' + formatBytes(fieldSchema?.['x-file-max-size']) + '.',
+        );
+      }
+      if (fieldSchema?.['x-file-min-size']) {
+        this.preDescription.push(
+          'Min size: ' + formatBytes(fieldSchema?.['x-file-min-size']) + '.',
+        );
+      }
     }
 
     this.const = this.schema?.const || info?.const || '';

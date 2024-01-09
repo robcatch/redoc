@@ -8,6 +8,7 @@ import {
   TypePrefix,
   TypeTitle,
 } from '../../common-elements/fields';
+import styled from '../../styled-components';
 import { getSerializedValue, isObject } from '../../utils';
 import { ExternalDocumentation } from '../ExternalDocumentation/ExternalDocumentation';
 import { Markdown } from '../Markdown/Markdown';
@@ -29,7 +30,15 @@ export const FieldDetailsComponent = observer((props: FieldProps) => {
   const { enumSkipQuotes, hideSchemaTitles } = React.useContext(OptionsContext);
 
   const { showExamples, field, renderDiscriminatorSwitch } = props;
-  const { schema, description, deprecated, extensions, in: _in, const: _const } = field;
+  const {
+    schema,
+    description,
+    deprecated,
+    extensions,
+    in: _in,
+    const: _const,
+    preDescription,
+  } = field;
   const isArrayType = schema.type === 'array';
 
   const rawDefault = enumSkipQuotes || _in === 'header'; // having quotes around header field default values is confusing and inappropriate
@@ -102,6 +111,15 @@ export const FieldDetailsComponent = observer((props: FieldProps) => {
       )}{' '}
       {renderedExamples}
       <Extensions extensions={{ ...extensions, ...schema.extensions }} />
+      {preDescription && preDescription.length > 0 && (
+        <PreDescriptionContainer>
+          {preDescription?.map((text, i) => (
+            <PreDescriptionDiv key={i}>
+              <Markdown compact={true} source={text} />
+            </PreDescriptionDiv>
+          ))}
+        </PreDescriptionContainer>
+      )}
       <div>
         <Markdown compact={true} source={description} />
       </div>
@@ -113,5 +131,12 @@ export const FieldDetailsComponent = observer((props: FieldProps) => {
     </div>
   );
 });
+
+const PreDescriptionContainer = styled.div`
+  margin: 5px 0;
+`;
+const PreDescriptionDiv = styled.div`
+  font-size: 13px;
+`;
 
 export const FieldDetails = React.memo<FieldProps>(FieldDetailsComponent);
