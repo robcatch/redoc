@@ -218,3 +218,39 @@ export function isArray(value: unknown): value is any[] {
 export function isBoolean(value: unknown): value is boolean {
   return typeof value === 'boolean';
 }
+
+export function formatBytes(nStr) {
+  const scale = ['B', 'kB', 'MB', 'GB', 'TB'];
+  return formatToScale(nStr, 1024, { scale });
+}
+
+function formatToScale(num, base = 1000, options) {
+  const scaleUnit = options?.scale?.[0] ? ' ' + options.scale[0] : '';
+  if (!Number(num)) {
+    return 0 + scaleUnit;
+  }
+  const minValue = options?.precision ? 1 / 10 ** options.precision : 0.01;
+  if (Number(num) > 0 && Number(num) < minValue) {
+    return '<' + minValue + scaleUnit;
+  }
+  const n = typeof num === 'number' ? num : parseInt(num, 10);
+
+  // Get deeper only if there will be at least 1 scale option left
+  if (options?.scale?.length > 1 && n >= base) {
+    // Get down on next scale increment
+    return formatToScale(n / base, base, { ...options, scale: options.scale.slice(1) });
+  }
+
+  return (
+    (options?.precision ? n.toFixed(options.precision) : addDecimalToSingleDigit(n)) + scaleUnit
+  );
+}
+
+function addDecimalToSingleDigit(num) {
+  const ret = num | 0;
+  const split = num.toFixed(1).split('.');
+  if (Math.abs(ret) < 10 && split.length > 1 && split[1] !== '0') {
+    return ret + '.' + split[1];
+  }
+  return ret;
+}

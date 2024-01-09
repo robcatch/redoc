@@ -31,8 +31,8 @@ export const PropertyCell = styled.td<{ kind?: string }>`
     background-image: linear-gradient(
       to bottom,
       transparent 0%,
-      transparent 22px,
-      ${props => props.theme.schema.linesColor} 22px,
+      transparent 20px,
+      ${props => props.theme.schema.linesColor} 20px,
       ${props => props.theme.schema.linesColor} 100%
     );
   }
@@ -41,8 +41,8 @@ export const PropertyCell = styled.td<{ kind?: string }>`
     background-image: linear-gradient(
       to bottom,
       ${props => props.theme.schema.linesColor} 0%,
-      ${props => props.theme.schema.linesColor} 22px,
-      transparent 22px,
+      ${props => props.theme.schema.linesColor} 20px,
+      transparent 20px,
       transparent 100%
     );
   }

@@ -15,6 +15,7 @@ import {
 import { GroupModel } from './Group.model';
 import { SecurityRequirementModel } from './SecurityRequirement';
 import { CallbackModel } from './Callback';
+import { EventModel } from './Event';
 import { FieldModel } from './Field';
 import { RequestBodyModel } from './RequestBody';
 import { ResponseModel } from './Response';
@@ -79,6 +80,7 @@ export class OperationModel implements IMenuItem {
   isCallback: boolean;
   isWebhook: boolean;
   isEvent: boolean;
+  publishes: EventModel[];
 
   constructor(
     private parser: OpenAPIParser,
@@ -103,6 +105,15 @@ export class OperationModel implements IMenuItem {
     this.isCallback = isCallback;
     this.isWebhook = operationSpec.isWebhook;
     this.isEvent = this.isCallback || this.isWebhook;
+    this.publishes = operationSpec['x-publishes']?.map(
+      (e: any) =>
+        new EventModel({
+          parser: this.parser,
+          event: e.event || e,
+          text: e.text,
+          options: options,
+        }),
+    );
 
     this.name = getOperationSummary(operationSpec);
 

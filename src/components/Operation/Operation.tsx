@@ -13,6 +13,7 @@ import { Extensions } from '../Fields/Extensions';
 import { Markdown } from '../Markdown/Markdown';
 import { OptionsContext } from '../OptionsProvider';
 import { Parameters } from '../Parameters/Parameters';
+import { PublishesList } from '../Publishes/PublishesList';
 import { RequestSamples } from '../RequestSamples/RequestSamples';
 import { ResponsesList } from '../Responses/ResponsesList';
 import { ResponseSamples } from '../ResponseSamples/ResponseSamples';
@@ -60,6 +61,7 @@ export const Operation = observer(({ operation }: OperationProps): JSX.Element =
             <Parameters parameters={operation.parameters} body={operation.requestBody} />
             <ResponsesList responses={operation.responses} />
             <CallbacksList callbacks={operation.callbacks} />
+            <PublishesList publishes={operation.publishes} />
           </MiddlePanel>
           <DarkRightPanel>
             {!options.pathInMiddlePanel && !isWebhook && <Endpoint operation={operation} />}

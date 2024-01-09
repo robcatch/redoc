@@ -28,7 +28,8 @@ export class MediaTypeModel {
   ) {
     this.name = name;
     this.isRequestType = isRequestType;
-    this.schema = info.schema && new SchemaModel(parser, info.schema, '', options);
+    this.schema =
+      info.schema && new SchemaModel(parser, info.schema, '', options, false, [], isRequestType);
     this.onlyRequiredInSamples = options.onlyRequiredInSamples;
     this.generatedPayloadSamplesMaxDepth = options.generatedPayloadSamplesMaxDepth;
     if (info.examples !== undefined) {

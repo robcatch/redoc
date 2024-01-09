@@ -8,6 +8,9 @@ import styled from 'styled-components';
 
 const StyledMarkdownSpan = styled(props => <StyledMarkdownBlock {...props} />)`
   display: inline;
+  p {
+    display: inline;
+  }
 `;
 
 const sanitize = (untrustedSpec, html) => (untrustedSpec ? DOMPurify.sanitize(html) : html);
