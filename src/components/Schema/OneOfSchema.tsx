@@ -10,6 +10,8 @@ import { Badge } from '../../common-elements/shelfs';
 import { SchemaModel } from '../../services/models';
 import { ConstraintsView } from '../Fields/FieldConstraints';
 import { Schema, SchemaProps } from './Schema';
+import { DiscriminatorDropdown } from './DiscriminatorDropdown';
+import { OptionsConsumer } from '../OptionsProvider';
 
 export interface OneOfButtonProps {
   subSchema: SchemaModel;
@@ -54,9 +56,27 @@ export class OneOfSchema extends React.Component<SchemaProps> {
       <div>
         <OneOfLabel> {schema.oneOfType} </OneOfLabel>
         <OneOfList>
-          {oneOf.map((subSchema, idx) => (
-            <OneOfButton key={subSchema.pointer} schema={schema} subSchema={subSchema} idx={idx} />
-          ))}
+          <OptionsConsumer>
+            {options =>
+              options.maxOneOfButtons && oneOf.length > options.maxOneOfButtons ? (
+                <DiscriminatorDropdown
+                  parent={schema}
+                  enumValues={oneOf.map(
+                    subSchema => subSchema.title || subSchema.typePrefix + subSchema.displayType,
+                  )}
+                />
+              ) : (
+                oneOf?.map((subSchema, idx) => (
+                  <OneOfButton
+                    key={subSchema.pointer}
+                    schema={schema}
+                    subSchema={subSchema}
+                    idx={idx}
+                  />
+                ))
+              )
+            }
+          </OptionsConsumer>
         </OneOfList>
         <div>
           {oneOf[schema.activeOneOf].deprecated && <Badge type="warning">Deprecated</Badge>}
