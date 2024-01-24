@@ -369,8 +369,12 @@ export class OpenAPIParser {
         const beforeAllOf = allOf.slice(0, i);
         const afterAllOf = allOf.slice(i + 1);
         return {
+          ...schema,
+          allOf: undefined,
           oneOf: sub.oneOf.map((part: OpenAPISchema) => {
+            const { resolved: def } = this.deref(part);
             return {
+              title: def.title,
               allOf: [...beforeAllOf, part, ...afterAllOf],
               'x-refsStack': refsStack,
             };

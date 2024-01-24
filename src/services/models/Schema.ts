@@ -132,7 +132,7 @@ export class SchemaModel {
     this.externalDocs = schema.externalDocs;
 
     this.constraints = humanizeConstraints(schema);
-    this.displayFormat = isRequestType && this.rawSchema['x-file-only'] ? 'binary' : this.format;
+    this.displayFormat = isRequestType && schema['x-file-only'] ? 'binary' : this.format;
     this.isPrimitive = isPrimitiveType(schema, this.type);
     this.default = schema.default;
     this.readOnly = !!schema.readOnly;
