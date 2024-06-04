@@ -466,15 +466,17 @@ function buildFields(
     const required =
       schema.required === undefined ? false : schema.required.indexOf(fieldName) > -1;
 
+    const _schema = { ...field };
+    if (field.default) {
+      _schema.default = defaults ? defaults[fieldName] : field.default;
+    }
+
     return new FieldModel(
       parser,
       {
         name: schema.properties ? fieldName : `[${fieldName}]`,
         required,
-        schema: {
-          ...field,
-          default: field.default === undefined && defaults ? defaults[fieldName] : field.default,
-        },
+        schema: _schema,
       },
       $ref + '/properties/' + fieldName,
       options,
