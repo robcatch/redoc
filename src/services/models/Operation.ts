@@ -21,7 +21,12 @@ import { RequestBodyModel } from './RequestBody';
 import { ResponseModel } from './Response';
 import { SideNavStyleEnum } from '../types';
 
-import type { OpenAPIExternalDocumentation, OpenAPIServer, OpenAPIXCodeSample } from '../../types';
+import type {
+  OpenAPIExternalDocumentation,
+  OpenAPIServer,
+  OpenAPIXBadges,
+  OpenAPIXCodeSample,
+} from '../../types';
 import type { OpenAPIParser } from '../OpenAPIParser';
 import type { RedocNormalizedOptions } from '../RedocNormalizedOptions';
 import type { MediaContentModel } from './MediaContent';
@@ -72,6 +77,7 @@ export class OperationModel implements IMenuItem {
   operationId?: string;
   operationHash?: string;
   httpVerb: string;
+  badges: OpenAPIXBadges[];
   deprecated: boolean;
   path: string;
   servers: OpenAPIServer[];
@@ -123,6 +129,12 @@ export class OperationModel implements IMenuItem {
         : options.sideNavStyle === SideNavStyleEnum.PathOnly
         ? this.path
         : this.name;
+    this.badges =
+      operationSpec['x-badges']?.map(({ name, color, position }) => ({
+        name,
+        color: color,
+        position: position || 'after',
+      })) || [];
 
     if (this.isCallback) {
       // NOTE: Callbacks by default should not inherit the specification's global `security` definition.

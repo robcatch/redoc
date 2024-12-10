@@ -1,3 +1,37 @@
+# [2.2.0](https://github.com/Redocly/redoc/compare/v2.1.5...v2.2.0) (2024-10-16)
+
+
+### Bug Fixes
+
+* show siblings schema with oneOf ([#2576](https://github.com/Redocly/redoc/issues/2576)) ([60d131b](https://github.com/Redocly/redoc/commit/60d131b0a9dab4710e900323c9ba81160cecf7d8))
+
+
+### Features
+
+* add support x-badges ([#2605](https://github.com/Redocly/redoc/issues/2605)) ([64f1877](https://github.com/Redocly/redoc/commit/64f18779e5fe7e03f25862463cbc5062e85c867c))
+
+
+
+## [2.1.5](https://github.com/Redocly/redoc/compare/v2.1.4...v2.1.5) (2024-06-10)
+
+
+### Bug Fixes
+
+* update react to 18 and react-tabs to 6 ([#2547](https://github.com/Redocly/redoc/issues/2547)) ([c664dd0](https://github.com/Redocly/redoc/commit/c664dd0d56571ce799b8eadd081d86a6b2cdefae))
+
+
+
+## [2.1.4](https://github.com/Redocly/redoc/compare/v2.1.3...v2.1.4) (2024-04-25)
+
+
+### Bug Fixes
+
+* add deprecated css to clickable property name ([#2526](https://github.com/Redocly/redoc/issues/2526)) ([b0d03d0](https://github.com/Redocly/redoc/commit/b0d03d02069c1508447ddebc2f8a3fffa9b03ce5))
+* use h2/h3 for headings instead of h1/h2 for better seo ([#2514](https://github.com/Redocly/redoc/issues/2514)) ([2b72dc0](https://github.com/Redocly/redoc/commit/2b72dc0e90f759a8ee2e47691c844e7f05928a24))
+* security vulnerability ([#2445](https://github.com/Redocly/redoc/pull/2445)) ([1f11f5](https://github.com/Redocly/redoc/commit/1f11f597c4f10ddd601db247f5034052b6ca689f))
+
+
+
 ## [2.1.3](https://github.com/Redocly/redoc/compare/v2.1.2...v2.1.3) (2023-10-24)
 
 
