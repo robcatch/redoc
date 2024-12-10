@@ -390,13 +390,22 @@ export class SchemaModel {
     }
 
     this.oneOf = refs.map(({ $ref, name }) => {
+      const { resolved: derefVariant, refsStack } = parser.deref({ $ref }, this.refsStack, true);
+
+      const merged = parser.mergeAllOf(derefVariant, $ref, refsStack);
+
       const innerSchema = new SchemaModel(
         parser,
-        { $ref },
+        // merge base schema into each of discriminator's subschemas
+        {
+          // variant may already have allOf so merge it to not get overwritten
+          ...merged,
+          allOf: [{ ...this.schema, oneOf: undefined, anyOf: undefined, discriminator: undefined }],
+        } as OpenAPISchema,
         $ref,
         this.options,
         true,
-        this.refsStack.slice(0, -1),
+        refsStack,
         this.isRequestType,
       );
       innerSchema.title = name;
