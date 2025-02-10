@@ -491,6 +491,19 @@ export function humanizeConstraints(schema: OpenAPISchema): string[] {
     res.push(stringRange);
   }
 
+  if (
+    !schema.format &&
+    !schema['x-file-only'] &&
+    (isArray(schema.type) ? schema.type.includes('string') : schema.type === 'string')
+  ) {
+    if (schema['x-no-tags']) {
+      res.push('no tags');
+    }
+    if (!schema['x-allow-entities'] && !schema['x-no-tags']) {
+      res.push('no entities');
+    }
+  }
+
   const arrayRange = humanizeRangeConstraint('items', schema.minItems, schema.maxItems);
   if (arrayRange !== undefined) {
     res.push(arrayRange);
