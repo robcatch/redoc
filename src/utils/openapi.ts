@@ -499,7 +499,7 @@ export function humanizeConstraints(schema: OpenAPISchema): string[] {
     if (schema['x-no-tags']) {
       res.push('no tags');
     }
-    if (!schema['x-allow-entities'] && !schema['x-no-tags']) {
+    if (schema['x-disallow-entities']) {
       res.push('no entities');
     }
   }
