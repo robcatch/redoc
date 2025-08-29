@@ -72,15 +72,18 @@ export class Schema extends React.Component<Partial<SchemaProps>> {
       return activeSchema.isCircular ? (
         <RecursiveSchema schema={activeSchema} />
       ) : (
-        <ObjectSchema
-          {...rest}
-          level={level}
-          schema={activeSchema}
-          discriminator={{
-            fieldName: discriminatorProp,
-            parentSchema: schema,
-          }}
-        />
+        <div>
+          {showFieldDetails && <FieldDetails field={field} noItemsType={rest.noItemsType} />}
+          <ObjectSchema
+            {...rest}
+            level={level}
+            schema={activeSchema}
+            discriminator={{
+              fieldName: discriminatorProp,
+              parentSchema: schema,
+            }}
+          />
+        </div>
       );
     }
 
