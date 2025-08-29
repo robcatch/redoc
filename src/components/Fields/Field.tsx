@@ -23,6 +23,7 @@ import type { FieldModel } from '../../services/models';
 export interface FieldProps extends SchemaOptions {
   className?: string;
   isLast?: boolean;
+  noItemsType?: boolean;
   showExamples?: boolean;
 
   field: FieldModel;

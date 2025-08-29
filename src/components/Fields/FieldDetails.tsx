@@ -29,7 +29,7 @@ import { ArrayItemDetails } from './ArrayItemDetails';
 export const FieldDetailsComponent = observer((props: FieldProps) => {
   const { enumSkipQuotes, hideSchemaTitles } = React.useContext(OptionsContext);
 
-  const { showExamples, field, renderDiscriminatorSwitch } = props;
+  const { showExamples, noItemsType, field, renderDiscriminatorSwitch } = props;
   const {
     schema,
     description,
@@ -98,7 +98,7 @@ export const FieldDetailsComponent = observer((props: FieldProps) => {
         <ConstraintsView constraints={schema.constraints} />
         <Pattern schema={schema} />
         {schema.isCircular && <RecursiveLabel> {l('recursive')} </RecursiveLabel>}
-        {isArrayType && schema.items && <ArrayItemDetails schema={schema.items} />}
+        {isArrayType && !noItemsType && schema.items && <ArrayItemDetails schema={schema.items} />}
       </div>
       {deprecated && (
         <div>

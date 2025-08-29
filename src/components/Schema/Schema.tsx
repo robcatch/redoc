@@ -4,6 +4,7 @@ import * as React from 'react';
 import { FieldDetails } from '../Fields/FieldDetails';
 
 import { FieldModel, SchemaModel } from '../../services/models';
+import styled from '../../styled-components';
 
 import { ArraySchema } from './ArraySchema';
 import { ObjectSchema } from './ObjectSchema';
@@ -12,10 +13,16 @@ import { RecursiveSchema } from './RecursiveSchema';
 
 import { isArray } from '../../utils/helpers';
 
+const Spacer = styled.div`
+  padding-top: ${({ theme }) => theme.spacing.unit * 2}px;
+`;
+
 export interface SchemaOptions {
+  noItemsType?: boolean;
   showTitle?: boolean;
   skipReadOnly?: boolean;
   skipWriteOnly?: boolean;
+  showFieldDetails?: boolean;
   level?: number;
 }
 
@@ -37,6 +44,22 @@ export class Schema extends React.Component<Partial<SchemaProps>> {
     if (isCircular) {
       return <RecursiveSchema schema={schema} />;
     }
+
+    // TODO: maybe adjust FieldDetails to accept schema
+    const field = {
+      schema,
+      name: '',
+      required: false,
+      description: schema.description,
+      externalDocs: schema.externalDocs,
+      deprecated: false,
+      toggle: () => null,
+      expanded: false,
+    } as any as FieldModel; // cast needed for hot-loader to not fail
+
+    const types = isArray(type) ? type : [type];
+    const showFieldDetails =
+      rest.showFieldDetails || (!types.includes('object') && !types.includes('array'));
 
     if (discriminatorProp !== undefined) {
       if (!oneOf || !oneOf.length) {
@@ -65,30 +88,23 @@ export class Schema extends React.Component<Partial<SchemaProps>> {
       return <OneOfSchema schema={schema} {...rest} />;
     }
 
-    const types = isArray(type) ? type : [type];
-    if (types.includes('object')) {
-      if (schema.fields?.length) {
-        return <ObjectSchema {...(this.props as any)} level={level} />;
-      }
-    } else if (types.includes('array')) {
-      return <ArraySchema {...(this.props as any)} level={level} />;
-    }
-
-    // TODO: maybe adjust FieldDetails to accept schema
-    const field = {
-      schema,
-      name: '',
-      required: false,
-      description: schema.description,
-      externalDocs: schema.externalDocs,
-      deprecated: false,
-      toggle: () => null,
-      expanded: false,
-    } as any as FieldModel; // cast needed for hot-loader to not fail
-
     return (
       <div>
-        <FieldDetails field={field} />
+        {showFieldDetails && <FieldDetails field={field} noItemsType={rest.noItemsType} />}
+        {types.includes('object') ? (
+          schema.fields?.length ? (
+            <ObjectSchema {...(this.props as any)} level={level} />
+          ) : (
+            ''
+          )
+        ) : types.includes('array') ? (
+          <div>
+            {showFieldDetails && <Spacer></Spacer>}
+            <ArraySchema {...(this.props as any)} level={level} />
+          </div>
+        ) : (
+          ''
+        )}
       </div>
     );
   }

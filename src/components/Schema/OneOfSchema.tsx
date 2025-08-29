@@ -8,7 +8,6 @@ import {
 } from '../../common-elements/schema';
 import { Badge } from '../../common-elements/shelfs';
 import { SchemaModel } from '../../services/models';
-import { ConstraintsView } from '../Fields/FieldConstraints';
 import { Schema, SchemaProps } from './Schema';
 import { DiscriminatorDropdown } from './DiscriminatorDropdown';
 import { OptionsConsumer } from '../OptionsProvider';
@@ -81,8 +80,7 @@ export class OneOfSchema extends React.Component<SchemaProps> {
         <div>
           {oneOf[schema.activeOneOf].deprecated && <Badge type="warning">Deprecated</Badge>}
         </div>
-        <ConstraintsView constraints={activeSchema.constraints} />
-        <Schema {...this.props} schema={activeSchema} />
+        <Schema {...this.props} schema={activeSchema} showFieldDetails={true} noItemsType={true} />
       </div>
     );
   }
