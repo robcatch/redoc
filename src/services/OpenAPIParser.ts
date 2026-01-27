@@ -242,6 +242,8 @@ export class OpenAPIParser {
         ...otherConstraints
       } = subSchema;
 
+      delete otherConstraints.discriminator;
+
       if (receiver.type !== type && receiver.type !== undefined && type !== undefined) {
         console.warn(`Incompatible types in allOf at "${$ref}": "${receiver.type}" and "${type}"`);
       }

@@ -164,7 +164,7 @@ export class SchemaModel {
       return;
     }
 
-    if (!isChild && getDiscriminator(schema) !== undefined) {
+    if (getDiscriminator(schema) !== undefined) {
       this.initDiscriminator(schema, parser);
       return;
     } else if (

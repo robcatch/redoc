@@ -7,7 +7,7 @@ import { FieldModel, SchemaModel } from '../../services/models';
 import styled from '../../styled-components';
 
 import { ArraySchema } from './ArraySchema';
-import { ObjectSchema } from './ObjectSchema';
+import { ObjectSchema, ObjectSchemaProps } from './ObjectSchema';
 import { OneOfSchema } from './OneOfSchema';
 import { RecursiveSchema } from './RecursiveSchema';
 
@@ -68,7 +68,15 @@ export class Schema extends React.Component<Partial<SchemaProps>> {
         );
         return null;
       }
-      const activeSchema = oneOf[schema.activeOneOf];
+      let activeSchema = schema;
+      const discriminators = [] as NonNullable<ObjectSchemaProps['discriminators']>;
+      while (activeSchema && activeSchema.discriminatorProp && activeSchema.oneOf) {
+        discriminators.push({
+          fieldName: activeSchema.discriminatorProp,
+          parentSchema: activeSchema,
+        });
+        activeSchema = activeSchema.oneOf[activeSchema.activeOneOf];
+      }
       return activeSchema.isCircular ? (
         <RecursiveSchema schema={activeSchema} />
       ) : (
@@ -78,10 +86,7 @@ export class Schema extends React.Component<Partial<SchemaProps>> {
             {...rest}
             level={level}
             schema={activeSchema}
-            discriminator={{
-              fieldName: discriminatorProp,
-              parentSchema: schema,
-            }}
+            discriminators={discriminators}
           />
         </div>
       );

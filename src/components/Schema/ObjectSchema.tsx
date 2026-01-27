@@ -12,17 +12,17 @@ import { mapWithLast } from '../../utils';
 import { OptionsContext } from '../OptionsProvider';
 
 export interface ObjectSchemaProps extends SchemaProps {
-  discriminator?: {
+  discriminators?: Array<{
     fieldName: string;
     parentSchema: SchemaModel;
-  };
+  }>;
 }
 
 export const ObjectSchema = observer(
   ({
     schema: { fields = [], title },
     showTitle,
-    discriminator,
+    discriminators,
     skipReadOnly,
     skipWriteOnly,
     level,
@@ -52,6 +52,10 @@ export const ObjectSchema = observer(
         {showTitle && <PropertiesTableCaption>{title}</PropertiesTableCaption>}
         <tbody>
           {mapWithLast(filteredFields, (field, isLast) => {
+            // TODO: Handle multiple discriminators for one field.
+            const discriminator = discriminators?.find(
+              discriminator => discriminator.fieldName === field.name,
+            );
             return (
               <Field
                 key={field.name}

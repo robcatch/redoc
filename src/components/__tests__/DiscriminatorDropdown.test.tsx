@@ -44,10 +44,12 @@ describe('Components', () => {
         const schemaView = shallow(
           <ObjectSchema
             schema={schema.oneOf![0]}
-            discriminator={{
-              fieldName: schema.discriminatorProp,
-              parentSchema: schema,
-            }}
+            discriminators={[
+              {
+                fieldName: schema.discriminatorProp,
+                parentSchema: schema,
+              },
+            ]}
           />,
         );
         expect(filterPropsDeep(toJson(schemaView), ['field.schema.options'])).toMatchSnapshot();
