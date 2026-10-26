@@ -1459,6 +1459,25 @@ describe('schemaProcessor conditional (if/then/else)', () => {
   });
 });
 
+describe('schemaProcessor false schema', () => {
+  it('displays a `false` property schema as "none", not "any"', () => {
+    const schema = {
+      type: 'object',
+      required: ['a'],
+      properties: { a: false, b: true },
+      patternProperties: { '^x-': false },
+    } as unknown as SchemaNode;
+
+    const props = requireProps(schemaProcessor(schema, makeDocument({})));
+
+    expect(props['a']?.type).toBe('none');
+    expect(props['a']?.isRequired).toBe(true);
+    expect(props['b']?.type).toBe('any');
+    expect(props['^x-']?.type).toBe('none');
+    expect(props['^x-']?.isPatternProperty).toBe(true);
+  });
+});
+
 describe('schemaProcessor discriminator', () => {
   it("keeps a variant's own nested discriminator as a discriminator switcher", () => {
     const schema = {

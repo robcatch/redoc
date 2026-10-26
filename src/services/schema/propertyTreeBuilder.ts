@@ -386,6 +386,21 @@ function sortPropertiesByRequired(
   return Object.fromEntries([...requiredInOrder, ...requiredRest, ...optional]);
 }
 
+// The `false` boolean schema matches nothing; it reaches here despite the `SchemaNode` typing.
+function isFalseSchema(value: unknown): boolean {
+  return value === false;
+}
+
+function buildFalseSchemaProperty(
+  options: PropertyShellOptions,
+  ctx: SchemaTreeContext,
+): PropertyType {
+  const property = buildPropertyShell({}, { ...options, exampleSerializer: ctx.exampleSerializer });
+  property.type = 'none';
+  property.isExpandable = false;
+  return property;
+}
+
 function buildObjectProperties(
   schema: SchemaNode,
   ctx: SchemaTreeContext,
@@ -399,6 +414,10 @@ function buildObjectProperties(
 
   const props = schema.properties || {};
   for (const [name, raw] of Object.entries(props)) {
+    if (isFalseSchema(raw)) {
+      result[name] = buildFalseSchemaProperty({ isRequired: requiredList.includes(name) }, ctx);
+      continue;
+    }
     const merged: SchemaNode = { ...raw };
     if (merged.default === undefined && defaults[name] !== undefined)
       merged.default = defaults[name];
@@ -417,6 +436,10 @@ function buildObjectProperties(
   }
 
   for (const [name, raw] of Object.entries(schema.patternProperties || {})) {
+    if (isFalseSchema(raw)) {
+      result[name] = buildFalseSchemaProperty({ isPatternProperty: true }, ctx);
+      continue;
+    }
     const childPointer = `${parentPointer}/patternProperties/${encodeJsonPointerSegment(name)}`;
     result[name] = buildPropertyForNode(
       raw,
