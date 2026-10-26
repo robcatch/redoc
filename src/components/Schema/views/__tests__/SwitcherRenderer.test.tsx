@@ -277,6 +277,31 @@ describe('SwitcherRenderer discriminator state keys', () => {
     expect(screen.queryByText(/^Value:$/)).not.toBeInTheDocument();
   });
 
+  it('renders a selector row for a discriminator nested in the active variant', () => {
+    const nested = makeDiscriminator('brand', {
+      visa: { properties: { brand: { type: 'string' }, cvv: { type: 'string' } } },
+      amex: { properties: { brand: { type: 'string' }, cid: { type: 'string' } } },
+    });
+    const switcher = makeDiscriminator('kind', {
+      card: {
+        properties: { kind: { type: 'string' }, brand: { type: 'string' } },
+        switcher: nested,
+      },
+      bank: { properties: { kind: { type: 'string' }, iban: { type: 'string' } } },
+    });
+    const property = makeSwitcherProperty(switcher, { kind: { type: 'string' } });
+
+    renderWithStore(<SwitcherRenderer property={property} level={0} fieldParentsName={[]} />);
+
+    expect(screen.getAllByTestId('schema-enum-values')).toHaveLength(2);
+    expect(screen.getByText('cvv')).toBeInTheDocument();
+    expect(screen.queryByText('cid')).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('amex'));
+    expect(screen.getByText('cid')).toBeInTheDocument();
+    expect(screen.queryByText('cvv')).not.toBeInTheDocument();
+  });
+
   it('renders Value-labeled row before discriminator for single-value enum (TimelineAction-style)', () => {
     const switcher = makeDiscriminator('action', {
       'redemption-cancel': opt({

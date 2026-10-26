@@ -597,9 +597,16 @@ function inheritsDiscriminator(
   return (schema['x-parentRefs'] ?? []).some((ref) => hostsDiscriminator(ref, propertyName, ctx));
 }
 
-function stripVariantHostMarkers(variant: SchemaNode, ref: string): SchemaNode {
-  delete variant.discriminator;
-  delete variant['x-discriminator'];
+function stripVariantHostMarkers(
+  variant: SchemaNode,
+  ref: string,
+  hostPropertyName: string | undefined,
+): SchemaNode {
+  // only the host's own discriminator is inherited; a different one is the variant's nested switcher
+  if (getDiscriminatorObject(variant)?.propertyName === hostPropertyName) {
+    delete variant.discriminator;
+    delete variant['x-discriminator'];
+  }
   delete variant['x-original-ref'];
 
   // a variant inherits the parent's oneOf/anyOf through allOf; when that list
@@ -613,15 +620,20 @@ function stripVariantHostMarkers(variant: SchemaNode, ref: string): SchemaNode {
   return variant;
 }
 
-function resolveMappedVariant(ref: string, ctx: SchemaTreeContext): SchemaNode | undefined {
-  const cached = ctx.variantResolutionCache.get(ref);
+function resolveMappedVariant(
+  ref: string,
+  ctx: SchemaTreeContext,
+  hostPropertyName: string | undefined,
+): SchemaNode | undefined {
+  const cacheKey = `${hostPropertyName}\0${ref}`;
+  const cached = ctx.variantResolutionCache.get(cacheKey);
   if (cached) return cached;
 
   const merged = resolveRefTarget(ref, ctx);
   if (!merged) return undefined;
 
-  const variant = stripVariantHostMarkers(merged, ref);
-  ctx.variantResolutionCache.set(ref, variant);
+  const variant = stripVariantHostMarkers(merged, ref, hostPropertyName);
+  ctx.variantResolutionCache.set(cacheKey, variant);
   return variant;
 }
 
@@ -630,13 +642,14 @@ function variantOptionBody(
   ref: string,
   listed: SchemaNode | undefined,
   ctx: SchemaTreeContext,
+  hostPropertyName: string | undefined,
 ): SchemaNode | undefined {
   const lossy =
     listed === undefined ||
     listed['x-circular-ref'] !== undefined ||
     listed['x-allof-cycle'] !== undefined;
-  if (lossy) return resolveMappedVariant(ref, ctx);
-  return stripVariantHostMarkers({ ...listed }, ref);
+  if (lossy) return resolveMappedVariant(ref, ctx, hostPropertyName);
+  return stripVariantHostMarkers({ ...listed }, ref, hostPropertyName);
 }
 
 /** A property redeclared by a variant keeps the host's definition too (`const` + host `type`). */
@@ -698,7 +711,7 @@ function buildDiscriminatorSwitcher(
   const variants = schema.oneOf || schema.anyOf || [];
   // a schema listed as its own variant is not a cycle, so its ref is not "open" for options
   const ownRef = resolveDiscriminatorParentRef(schema, parentPointer);
-  const childCtx: SchemaTreeContext = { ...ctx, isChild: true };
+  const childCtx: SchemaTreeContext = { ...ctx, isChild: false };
   // only the option that is the host schema itself is not a cycle; every other
   // option keeps the host's ref open so real recursion is still detected
   const optionCtx = (optionRef?: string): SchemaTreeContext =>
@@ -724,7 +737,7 @@ function buildDiscriminatorSwitcher(
   if (Object.keys(mapping).length > 0) {
     for (const [name, ref] of Object.entries(mapping)) {
       const idx = variants.findIndex((v) => v['x-original-ref'] === ref);
-      const resolved = variantOptionBody(ref, variants[idx], ctx);
+      const resolved = variantOptionBody(ref, variants[idx], ctx, discriminator.propertyName);
       if (!resolved) continue;
       const variantPointer = idx >= 0 ? `${parentPointer}/${compositionKey}/${idx}` : parentPointer;
       options[name] = buildOption(resolved, ref, false, variantPointer);
@@ -733,7 +746,10 @@ function buildDiscriminatorSwitcher(
     for (let i = 0; i < variants.length; i++) {
       const variant = variants[i];
       const ref = variant['x-original-ref'];
-      const resolved = typeof ref === 'string' ? variantOptionBody(ref, variant, ctx) : variant;
+      const resolved =
+        typeof ref === 'string'
+          ? variantOptionBody(ref, variant, ctx, discriminator.propertyName)
+          : variant;
       if (!resolved) continue;
       const title = variant.title || ref?.split('/').pop() || 'Variant';
       const variantPointer = `${parentPointer}/${compositionKey}/${i}`;
@@ -754,7 +770,7 @@ function buildDiscriminatorSwitcher(
       if (!derived) continue;
       for (const { ref, value } of derived) {
         if (explicitRefs.has(ref) || Object.hasOwn(options, value)) continue;
-        const resolved = resolveMappedVariant(ref, ctx);
+        const resolved = resolveMappedVariant(ref, ctx, discriminator.propertyName);
         if (!resolved) continue;
         options[value] = buildOption(resolved, ref, false, parentPointer);
       }
@@ -762,7 +778,9 @@ function buildDiscriminatorSwitcher(
   }
 
   const defaultRef = discriminator.defaultMapping;
-  const defaultVariant = defaultRef ? resolveMappedVariant(defaultRef, ctx) : undefined;
+  const defaultVariant = defaultRef
+    ? resolveMappedVariant(defaultRef, ctx, discriminator.propertyName)
+    : undefined;
   if (defaultRef && defaultVariant) {
     // only an entry carrying the schema's own name folds into "Default mapping";
     // explicit mapping names for the same ref stay listed

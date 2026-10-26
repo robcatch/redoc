@@ -1460,6 +1460,35 @@ describe('schemaProcessor conditional (if/then/else)', () => {
 });
 
 describe('schemaProcessor discriminator', () => {
+  it("keeps a variant's own nested discriminator as a discriminator switcher", () => {
+    const schema = {
+      discriminator: {
+        propertyName: 'kind',
+        mapping: { card: '#/components/schemas/Card', bank: '#/components/schemas/Bank' },
+      },
+      oneOf: [{ $ref: '#/components/schemas/Card' }, { $ref: '#/components/schemas/Bank' }],
+    };
+    const doc = makeDocument({
+      Card: {
+        type: 'object',
+        properties: { kind: { type: 'string' }, brand: { type: 'string' } },
+        discriminator: {
+          propertyName: 'brand',
+          mapping: { visa: '#/components/schemas/Visa', amex: '#/components/schemas/Amex' },
+        },
+        oneOf: [{ $ref: '#/components/schemas/Visa' }, { $ref: '#/components/schemas/Amex' }],
+      },
+      Bank: { type: 'object', properties: { kind: { type: 'string' }, iban: { type: 'string' } } },
+      Visa: { type: 'object', properties: { brand: { type: 'string' }, cvv: { type: 'string' } } },
+      Amex: { type: 'object', properties: { brand: { type: 'string' }, cid: { type: 'string' } } },
+    });
+
+    const result = schemaProcessor(schema, doc);
+    const card = requireSw(result).options['card'];
+    expect(card?.switcher?.type).toBe('discriminator');
+    expect(card?.switcher?.propertyName).toBe('brand');
+  });
+
   it('should render discriminator when both discriminator and oneOf are present', () => {
     const schema = {
       type: 'object',

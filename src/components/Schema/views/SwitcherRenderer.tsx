@@ -254,6 +254,18 @@ function OneOfSwitcher({
   );
 }
 
+type DiscriminatorRowsProps = {
+  hostProperties: Record<string, PropertyType>;
+  switcher: SwitcherType;
+  level: number;
+  expandByDefault?: boolean;
+  fieldParentsName?: string[];
+  skipReadOnly?: boolean;
+  skipWriteOnly?: boolean;
+  onOneOfChange?: (params: OneOfChangeParams) => void;
+  isFirstBlock: boolean;
+};
+
 function DiscriminatorSwitcher({
   property,
   switcher,
@@ -273,6 +285,37 @@ function DiscriminatorSwitcher({
   skipWriteOnly?: boolean;
   onOneOfChange?: (params: OneOfChangeParams) => void;
 }): ReactElement {
+  return (
+    <PropertyList>
+      <DiscriminatorRows
+        hostProperties={sharedHostProperties(property.properties ?? {}, switcher)}
+        switcher={switcher}
+        level={level}
+        expandByDefault={expandByDefault}
+        fieldParentsName={fieldParentsName}
+        skipReadOnly={skipReadOnly}
+        skipWriteOnly={skipWriteOnly}
+        onOneOfChange={onOneOfChange}
+        isFirstBlock
+      />
+    </PropertyList>
+  );
+}
+
+// Renders the rows of one discriminator level. When the active variant declares its
+// own discriminator, that level's rows are rendered recursively in place of its
+// property row, so the nested selector appears alongside the outer one.
+function DiscriminatorRows({
+  hostProperties,
+  switcher,
+  level,
+  expandByDefault,
+  fieldParentsName = [],
+  skipReadOnly,
+  skipWriteOnly,
+  onOneOfChange,
+  isFirstBlock,
+}: DiscriminatorRowsProps): ReactElement {
   const itemId = useContext(ItemIdContext);
   const variantStoreId = buildVariantStoreId(itemId ?? '', useContext(DeepLinkSectionContext));
   const discState = useAtomValue(
@@ -319,10 +362,8 @@ function DiscriminatorSwitcher({
 
   const activeOption = optionEntries[activeIdx] ?? optionEntries[0];
   const activeOptionProps = activeOption?.[1]?.properties ?? {};
-  const allProperties = mergeHostProperties(
-    sharedHostProperties(property.properties ?? {}, switcher),
-    activeOptionProps,
-  );
+  const nestedSwitcher = activeOption?.[1]?.switcher?.type === 'discriminator' ? activeOption[1].switcher : undefined;
+  const allProperties = mergeHostProperties(hostProperties, activeOptionProps);
 
   const { schemasExpansionLevel } = useAtomValue(globalOptionsAtom);
   const expand = expandByDefault ?? isWithinExpansionLevel(level, schemasExpansionLevel, 1);
@@ -331,6 +372,7 @@ function DiscriminatorSwitcher({
     () => appendVariantSuffix(fieldParentsName, `&d=${activeIdx}`),
     [fieldParentsName, activeIdx],
   );
+  const nestedParentsName = level > 1 ? variantParentsName : variantMarkersOnly(variantParentsName);
 
   const entries = Object.entries(allProperties).filter(([, prop]) => {
     if (skipReadOnly && prop.accessMode === 'read-only') return false;
@@ -338,9 +380,35 @@ function DiscriminatorSwitcher({
     return true;
   });
 
+  const renderNested = (
+    nested: SwitcherType,
+    nestedHost: Record<string, PropertyType>,
+    isFirst: boolean,
+  ): ReactElement => (
+    <DiscriminatorRows
+      key={`nested-${nested.propertyName ?? ''}`}
+      hostProperties={nestedHost}
+      switcher={nested}
+      level={level}
+      expandByDefault={expand}
+      fieldParentsName={nestedParentsName}
+      skipReadOnly={skipReadOnly}
+      skipWriteOnly={skipWriteOnly}
+      onOneOfChange={onOneOfChange}
+      isFirstBlock={isFirst}
+    />
+  );
+
+  const nestedPropertyName = nestedSwitcher?.propertyName;
+  const nestedHasOwnRow =
+    nestedPropertyName !== undefined &&
+    nestedPropertyName !== switcher.propertyName &&
+    entries.some(([name]) => name === nestedPropertyName);
+
   return (
-    <PropertyList>
+    <>
       {entries.map(([name, prop], index) => {
+        const isFirst = isFirstBlock && index === 0;
         if (name === switcher.propertyName) {
           const mappingKeys = optionEntries.map(([k]) => k);
           return (
@@ -349,13 +417,17 @@ function DiscriminatorSwitcher({
               fieldName={name}
               fieldParentsName={fieldParentsName}
               property={prop}
-              isFirst={index === 0}
+              isFirst={isFirst}
               mappingKeys={mappingKeys}
               optionEntries={optionEntries}
               activeIdx={activeIdx}
               onSelect={handleSelect}
             />
           );
+        }
+
+        if (nestedSwitcher && nestedHasOwnRow && name === nestedPropertyName) {
+          return renderNested(nestedSwitcher, { [name]: prop }, isFirst);
         }
 
         return (
@@ -365,17 +437,16 @@ function DiscriminatorSwitcher({
             property={prop}
             level={level}
             expandByDefault={expand}
-            isFirst={index === 0}
-            fieldParentsName={
-              level > 1 ? variantParentsName : variantMarkersOnly(variantParentsName)
-            }
+            isFirst={isFirst}
+            fieldParentsName={nestedParentsName}
             skipReadOnly={skipReadOnly}
             skipWriteOnly={skipWriteOnly}
             onOneOfChange={onOneOfChange}
           />
         );
       })}
-    </PropertyList>
+      {nestedSwitcher && !nestedHasOwnRow && renderNested(nestedSwitcher, {}, false)}
+    </>
   );
 }
 
