@@ -51,6 +51,9 @@ export function addSchemaDefinitionItems({
     const rawSchema = document.components?.schemas?.[schemaName] as
       | Record<string, unknown>
       | undefined;
+    if (rawSchema?.['x-auto-generated']) {
+      continue;
+    }
     const title = (rawSchema?.title as string | undefined) ?? schemaName;
     const segment = encodeBackSlashes(
       safeSlugify(schemaName).toLowerCase() || schemaName.toLowerCase(),

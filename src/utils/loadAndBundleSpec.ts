@@ -3,6 +3,7 @@ import { bundle, type Document } from '@redocly/openapi-core';
 
 import type { RedocConfig } from '@redocly/config';
 import type { OpenAPIDefinition, ParsedDocument } from '../types/openapi.js';
+import type { Source } from '@redocly/openapi-core/lib/bundle-oas';
 
 import { IS_BROWSER } from '@redocly/theme/core/openapi';
 
@@ -52,10 +53,17 @@ export async function loadAndBundleDefinition(
   }
 
   let parsed: ParsedDocument;
+  let source: Source;
   try {
     ({
-      bundle: { parsed },
-    } = (await bundle(bundleOpts)) as { bundle: { parsed: ParsedDocument } });
+      bundle: { parsed, source },
+    } = (await bundle(bundleOpts)) as { bundle: { parsed: ParsedDocument, source: Source } });
+    const sourceSchemas = JSON.parse(source.body).components.schemas;
+    for (const [ name, schema ] of Object.entries(parsed.components?.schemas || {})) {
+     if (!sourceSchemas[name]) {
+      schema['x-auto-generated'] = true;
+     }
+    }
   } catch (error) {
     const message = errorMessage(error);
     const stage =
