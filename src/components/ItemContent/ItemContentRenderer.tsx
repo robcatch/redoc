@@ -11,6 +11,7 @@ import { FieldsSection } from './sections/FieldsSection.js';
 import { ValuesSection } from './sections/ValuesSection.js';
 import { MessagesSection } from './sections/MessagesSection.js';
 import { CallbacksSection } from './sections/CallbacksSection.js';
+import { PublishesSection } from './sections/PublishesSection.js';
 import { GraphQLFieldsSection } from '../graphql/sections/GraphQLFieldsSection.js';
 import { GraphQLArgsSection } from '../graphql/sections/GraphQLArgsSection.js';
 import { ReturnTypeSection } from '../graphql/sections/ReturnTypeSection.js';
@@ -89,6 +90,8 @@ function SectionContent({ itemNode }: { itemNode: ItemContentNode }): ReactEleme
       return <ImplementsSection node={itemNode} />;
     case 'implemented-by':
       return <ImplementedBySection node={itemNode} />;
+    case 'publish':
+      return <PublishesSection node={itemNode} />;
     default:
       return <></>;
   }

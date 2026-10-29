@@ -5,6 +5,7 @@ const redocExtensions: Record<string, true> = {
   'x-allof-cycle': true,
   'x-complex': true,
   'x-parentRefs': true,
+  'x-publishes': true,
   'x-refsStack': true,
   'x-codeSamples': true,
   'x-displayName': true,

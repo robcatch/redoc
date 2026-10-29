@@ -1153,6 +1153,27 @@ describe('applyActiveVariantsToStore', () => {
   });
 
 
+  it('keeps host properties addressable by pointer when another schema refs them', () => {
+    const store = paymentStore(true);
+    store['components/schemas/Receipt'] = entry('components/schemas/Receipt', {
+      type: 'object',
+      properties: { amount: { $ref: '#/components/schemas/Payment/properties/amount' } },
+    });
+
+    const resolved = applyActiveVariantsToStore(store, { method: 0 });
+
+    expect(resolved['components/schemas/Payment'].properties).toEqual(
+      store['components/schemas/Payment'].data.properties,
+    );
+    expect(resolved['components/schemas/Payment'].allOf).toBeDefined();
+  });
+
+  it('leaves the rewritten host shape alone when nothing refs its properties', () => {
+    const resolved = applyActiveVariantsToStore(paymentStore(true), { method: 0 });
+
+    expect(resolved['components/schemas/Payment']).not.toHaveProperty('properties');
+  });
+
   it('does not merge a host example into the selected variant', () => {
     const store = paymentStore(true);
     const payment = store['components/schemas/Payment'];

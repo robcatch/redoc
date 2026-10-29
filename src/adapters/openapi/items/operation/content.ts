@@ -20,6 +20,7 @@ import type {
   OpenAPISchema,
   OpenAPIServer,
   OperationInfo,
+  NormalizedPublish
 } from '../../../../types/openapi.js';
 import type { ExampleType } from '../../../../types/schema.js';
 import {
@@ -65,6 +66,7 @@ import {
 const REQUEST_SECTION_DEEPLINK_SUFFIX = 'request';
 const RESPONSES_SECTION_DEEPLINK_SUFFIX = 'responses';
 const CALLBACKS_SECTION_DEEPLINK_SUFFIX = 'callbacks';
+const PUBLISHES_SECTION_DEEPLINK_SUFFIX = 'publishes';
 
 /**
  * Callback ids in the legacy `<name>/<verb>` shape, so previously shared links still resolve.
@@ -339,6 +341,10 @@ export function buildItemContent(operationInfo: OperationInfo, pageSlug: string)
 
   if (Array.isArray(operationInfo.callbacks) && operationInfo.callbacks.length > 0) {
     children.push(...buildCallbackSections(operationInfo, operationId, ignoreNamedSchemas));
+  }
+
+  if (operationInfo['x-publishes']) {
+    children.push(...buildPublishSections(operationInfo, operationId, ignoreNamedSchemas));
   }
 
 
@@ -1247,4 +1253,96 @@ function buildCodeSampleSourceFromContext(
     isWebhook,
     href,
   );
+}
+
+function buildPublishSections(
+  operationInfo: OperationInfo,
+  operationId: string,
+  ignoreNamedSchemas?: Set<string>,
+): ContentNode[] {
+  const sections: ContentNode[] = [
+    {
+      nodeType: nodeTypes.CONTAINER,
+      children: [
+        {
+          nodeType: nodeTypes.HEADER,
+          level: 4,
+          label: 'Publishes',
+          labelTranslationKey: 'publishes',
+          deepLinkSuffix: PUBLISHES_SECTION_DEEPLINK_SUFFIX,
+        },
+      ],
+      panels: [],
+    },
+  ];
+
+  const publishes = operationInfo['x-publishes'] ?? [];
+  for (const publish of publishes) {
+    sections.push(
+      buildPublishOperationSection(
+        operationInfo,
+        publish,
+        operationId,
+        ignoreNamedSchemas
+      ),
+    );
+  }
+
+  return sections;
+}
+
+function buildPublishOperationSection(
+  operationInfo: OperationInfo,
+  publish: NormalizedPublish,
+  operationId: string,
+  ignoreNamedSchemas?: Set<string>,
+): ContentNode {
+  const { options, storeCtx } = openApiContext.get();
+
+  let schemaId: string | undefined;
+  const resolvedSchema = resolveSchemaRef({ $ref: `#/components/schemas/${publish.event}` }, storeCtx?.document ?? {}, ignoreNamedSchemas) as Record<string, unknown>;
+  schemaId = registerSchema(storeCtx.schemaStore, storeCtx.hashIndex, {
+    kind: schemaKind.JSON_SCHEMA,
+    data: resolvedSchema,
+  });
+
+  let pbDescription;
+  if (publish.text) {
+    pbDescription = parseMarkdown(publish.text, options);
+    resolveMarkdocHeadingIds(
+      pbDescription ?? [],
+      operationId,
+      `${PUBLISHES_SECTION_DEEPLINK_SUFFIX}/${publish.event}`,
+    );
+  }
+
+  const pbRbac = readRbacScope(publish);
+  return {
+    nodeType: nodeTypes.CONTAINER,
+    children: [
+      {
+        nodeType: nodeTypes.ITEM,
+        variant: 'publish',
+        publish: {
+          operationId: publish.event,
+          description: pbDescription,
+          deprecated: publish.deprecated,
+          publishName: publish.event,
+          schemaId
+        },
+        pointer: operationInfo.pointer + '/x-publishes',
+      } as ItemContentNode,
+    ],
+    panels: [{
+    children: [
+        {
+          kind: panelKind.PUBLISH_PAYLOAD,
+          publishName: publish.event,
+          schemaId,
+          examples: []
+        },
+      ],
+    }],
+    ...rbacProp(pbRbac),
+  };
 }

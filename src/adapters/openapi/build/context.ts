@@ -12,6 +12,7 @@ import type {
   TagData,
   NormalizedCallback,
   NormalizedCallbackOperation,
+  NormalizedPublish
 } from '../../../types/openapi.js';
 import type { Referenced, BadgeData } from '../../../types/common.js';
 import type { AdapterBuildContextInput, StoreContext } from '../../../types/store.js';
@@ -359,6 +360,11 @@ function createOperationInfo(
       ? { url: opExtDocs.url, description: opExtDocs.description }
       : undefined,
     'x-badges': operationBadges.length > 0 ? operationBadges : undefined,
+    'x-publishes': normalizePublishes(
+      operation['x-publishes'],
+      storeCtx?.document ?? {},
+      options.ignoreNamedSchemas,
+    )
   };
 }
 
@@ -433,3 +439,30 @@ export function normalizeCallbacks(
   return result.length > 0 ? result : undefined;
 }
 
+export function normalizePublishes(
+  publishes: Array<string | NormalizedPublish>,
+  document: Record<string, unknown>,
+  ignoreNamedSchemas?: Set<string>,
+): NormalizedPublish[] | undefined {
+  if (!publishes?.length) return undefined;
+
+  const result: NormalizedPublish[] = [];
+
+  for (let index = 0; index < publishes.length; index++) {
+    const publish = publishes[index];
+    const eventName = typeof publish === 'string' ? publish : publish.event;
+    const eventRef = { $ref: `#/components/schemas/${eventName}` };
+    const resolved = resolveRef(document, eventRef, ignoreNamedSchemas);
+    if (!resolved || typeof resolved !== 'object') continue;
+
+    const publishRbac = readRbacScope(resolved);
+    result.push({
+      event: eventName,
+      index,
+      ...(typeof publish === 'string' ? {} : publish),
+      ...rbacProp(publishRbac),
+    });
+  }
+
+  return result.length > 0 ? result : undefined;
+}

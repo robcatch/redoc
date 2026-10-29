@@ -756,11 +756,62 @@ export function applyActiveVariantsToStore(
 
   // The loop above only rewrites entry roots; nested inline oneOf/anyOf and
   // discriminator hosts must collapse too, or samples are stuck on branch 0.
+  const pointerTargets = collectPropertyPointerTargets(schemaStore);
   for (const [id, data] of Object.entries(resolved)) {
-    resolved[id] = applyActiveVariantsToSchema(data, schemaStore, activeDiscriminator, activeOneOf);
+    const collapsed = applyActiveVariantsToSchema(
+      data,
+      schemaStore,
+      activeDiscriminator,
+      activeOneOf,
+    );
+    resolved[id] = pointerTargets.has(id)
+      ? keepPointerTargets(collapsed, schemaStore[id]?.data)
+      : collapsed;
   }
 
   return resolved;
+}
+
+const PROPERTY_POINTER = /^#\/(.+?)\/properties\//;
+
+/** Store ids that some schema addresses through a `/properties/...` JSON pointer. */
+function collectPropertyPointerTargets(
+  schemaStore: Record<string, SchemaEntry>,
+): Set<string> {
+  const targets = new Set<string>();
+  const walk = (value: unknown): void => {
+    if (!value || typeof value !== 'object') return;
+    if (Array.isArray(value)) {
+      value.forEach(walk);
+      return;
+    }
+    const record = value as Record<string, unknown>;
+    if (typeof record.$ref === 'string') {
+      const id = PROPERTY_POINTER.exec(record.$ref)?.[1];
+      if (id) targets.add(id);
+    }
+    Object.values(record).forEach(walk);
+  };
+  Object.values(schemaStore).forEach((entry) => walk(entry.data));
+  return targets;
+}
+
+/**
+ * Other schemas address a host's properties by JSON pointer (`#/components/schemas/Host/properties/id`),
+ * which only resolves at the entry's top level. A variant rewrite wraps the host keywords in
+ * `allOf`, burying `properties` where the pointer cannot reach, and the sampler then throws.
+ * The host's properties are already part of the rewritten schema, so restating them at the top
+ * level leaves its effective shape unchanged.
+ */
+function keepPointerTargets(
+  rewritten: Record<string, unknown>,
+  original: Record<string, unknown> | undefined,
+): Record<string, unknown> {
+  if (!original || rewritten === original) return rewritten;
+  if (rewritten.properties !== undefined || !isNonEmptyObject(original.properties)) {
+    return rewritten;
+  }
+  return { ...rewritten, properties: original.properties };
 }
 
 const REF_PREFIX = '#/';

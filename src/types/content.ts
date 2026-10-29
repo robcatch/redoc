@@ -120,7 +120,8 @@ export type ItemContentNode = {
     | 'possible-types'
     | 'implements'
     | 'implemented-by'
-    | 'requires-scopes';
+    | 'requires-scopes'
+    | 'publish';
   label?: string;
   labelTranslationKey?: string;
   schemaId?: string;
@@ -190,6 +191,14 @@ export type ItemContentNode = {
     deprecated?: boolean;
     type?: string;
   }>;
+
+  publish?: {
+    operationId?: string;
+    description?: string | Node | Node[];
+    deprecated?: boolean;
+    publishName: string;
+    schemaId: string;
+  };
 };
 
 export type SecuritySchemeDetail = {
@@ -491,6 +500,12 @@ export type CallbackPayloadPanelItem = BaseExamplePanelItem & {
   mediaTypeSchemas?: Record<string, MediaTypeContent>;
 };
 
+export type PublishPayloadPanelItem = BaseExamplePanelItem & {
+  kind: typeof panelKind.PUBLISH_PAYLOAD;
+  publishName?: string;
+  schemaId: string;
+}
+
 export type ExamplePanelItem =
   | PayloadExamplesPanelItem
   | CodeSamplePanelItem
@@ -499,7 +514,8 @@ export type ExamplePanelItem =
   | GraphQLQueryPanelItem
   | GraphQLResponsePanelItem
   | GraphQLVariablesPanelItem
-  | GraphQLTypeSamplePanelItem;
+  | GraphQLTypeSamplePanelItem
+  | PublishPayloadPanelItem;
 
 export type ReferencesPanelItem = {
   kind: typeof panelKind.REFERENCES;
@@ -610,6 +626,7 @@ export type ExamplesNode = MultiChildPanelBase<
   | typeof panelKind.GRAPHQL_RESPONSE
   | typeof panelKind.GRAPHQL_VARIABLES
   | typeof panelKind.GRAPHQL_TYPE_SAMPLE
+  | typeof panelKind.PUBLISH_PAYLOAD
 >;
 
 export type ReferencesNode = SingleChildPanelBase<typeof panelKind.REFERENCES>;

@@ -160,6 +160,7 @@ export const panelKind = {
   GRAPHQL_VARIABLES: 'graphql-variables',
   GRAPHQL_TYPE_SAMPLE: 'graphql-type-sample',
   MCP_EXAMPLE: 'mcp-example',
+  PUBLISH_PAYLOAD: 'publish-payload',
 } as const;
 
 export const schemaKind = {

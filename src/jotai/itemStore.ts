@@ -13,6 +13,7 @@ export type ItemStore = {
   activeExampleKey: string;
   activeMessageKey: string;
   selectedCallback: string;
+  selectedPublish: string;
   expandableSections: Record<string, boolean | undefined>;
   collapsibles: Record<string, boolean>;
 };
@@ -31,6 +32,7 @@ const DEFAULT_ITEM_STORE: ItemStore = Object.freeze({
   activeExampleKey: '',
   activeMessageKey: '',
   selectedCallback: '',
+  selectedPublish: '',
   expandableSections: Object.freeze({}),
   collapsibles: Object.freeze({}),
 });

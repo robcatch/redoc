@@ -472,6 +472,13 @@ export type NormalizedCallback = {
   operations?: NormalizedCallbackOperation[];
 };
 
+export type NormalizedPublish = {
+  event: string,
+  index: number,
+  text?: string,
+  deprecated?: boolean,
+}
+
 export type OperationInfo = {
   pointer: string;
   pathName: string;
@@ -492,6 +499,7 @@ export type OperationInfo = {
   externalDocs?: ExternalDocsData;
   'x-badges'?: OpenAPIXBadges[];
   'x-codeSamples'?: OpenAPIXCodeSample[];
+  'x-publishes'?: NormalizedPublish[]
 };
 
 export type MarkdownHeading = {

@@ -39,7 +39,8 @@ type DirectPanelKind =
   | typeof panelKind.REFERENCES
   | typeof panelKind.LOCATIONS
   | typeof panelKind.GROUP_ITEMS
-  | typeof panelKind.MCP_EXAMPLE;
+  | typeof panelKind.MCP_EXAMPLE
+  | typeof panelKind.PUBLISH_PAYLOAD;
 
 type PanelNodeByKind<TKind extends DirectPanelKind> = Extract<
   PanelNode,
@@ -66,6 +67,7 @@ const EXAMPLE_ITEM_KINDS: PanelItem['kind'][] = [
   panelKind.GRAPHQL_RESPONSE,
   panelKind.GRAPHQL_VARIABLES,
   panelKind.GRAPHQL_TYPE_SAMPLE,
+  panelKind.PUBLISH_PAYLOAD,
 ];
 
 const PANEL_COMPONENT_BY_KIND: DirectPanelComponentByKind = {
@@ -88,6 +90,7 @@ const PANEL_COMPONENT_BY_KIND: DirectPanelComponentByKind = {
   [panelKind.LOCATIONS]: LocationsPanelItem,
   [panelKind.GROUP_ITEMS]: GroupPanelItem,
   [panelKind.MCP_EXAMPLE]: McpExamplePanelItem,
+  [panelKind.PUBLISH_PAYLOAD]: ExamplesPanelItem,
 };
 
 function hasOnlyKind<K extends DirectPanelKind>(
@@ -172,6 +175,8 @@ function resolvePanelComponent(node: PanelNode): ReactElement | null {
         return renderKind(node, panelKind.GROUP_ITEMS);
       case panelKind.MCP_EXAMPLE:
         return renderKind(node, panelKind.MCP_EXAMPLE);
+      case panelKind.PUBLISH_PAYLOAD:
+        return renderKind(node, panelKind.PUBLISH_PAYLOAD);
       default:
         return null;
     }

@@ -11,6 +11,7 @@ import { GraphQLTypeSampleItem } from './GraphQLTypeSampleItem.js';
 import { GraphQLVariablesItem } from './GraphQLVariablesItem.js';
 import { PayloadExampleItem } from './PayloadExampleItem.js';
 import { ResponseExampleItem } from './ResponseExampleItem.js';
+import { PublishPayloadItem } from './PublishPayloadItem.js';
 
 const EXAMPLE_KIND_MAPPER: Partial<Record<ExampleKind, KindRenderer>> = {
   'code-sample': CodeSampleItem as KindRenderer,
@@ -21,6 +22,7 @@ const EXAMPLE_KIND_MAPPER: Partial<Record<ExampleKind, KindRenderer>> = {
   'graphql-response': GraphQLResponseItem as KindRenderer,
   'graphql-type-sample': GraphQLTypeSampleItem as KindRenderer,
   'graphql-variables': GraphQLVariablesItem as KindRenderer,
+  'publish-payload': PublishPayloadItem as KindRenderer,
 };
 
 export function ExamplesPanelItem({ node }: PanelNodeProps): ReactElement {

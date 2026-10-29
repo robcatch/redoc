@@ -155,7 +155,7 @@ function HeaderItemComponent({ node, path, parentNode }: HeaderItemProps): React
     isGraphQL,
   ]);
 
-  const spacingBeforeResponsesSection = !isGraphQL && level === 4 && deepLinkSuffix === 'responses';
+  const spacingBeforeResponsesSection = !isGraphQL && level === 4 && (deepLinkSuffix === 'responses' || deepLinkSuffix === 'publishes');
 
   return (
     <>

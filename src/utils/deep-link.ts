@@ -280,6 +280,8 @@ export function extractDeepLinkParamFromHash(
   return match?.[1];
 }
 
+export const PUBLISHES_SECTION = 'publishes';
+
 /** Section name owning a callback's suffixes: `callbacks/<callbackId>[/…]`. */
 export const CALLBACKS_SECTION = 'callbacks';
 const CALLBACKS_SEGMENT = `${CALLBACKS_SECTION}/`;
